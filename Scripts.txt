@@ -1,0 +1,515 @@
+rm(list=ls())
+library(tidyverse)
+library(naniar)
+
+library(readxl)
+library(openxlsx)
+d<-read.csv("C:/Users/U/Desktop/KAP/KAP_dataset.csv")
+names(d)
+head(d)
+gg_miss_var(d)
+#d[ d == "#NULL!"] <- NA
+#D=d[ complete.cases(d),]
+#nrow(D)
+d|> 
+  count(antibiotic_misuse_and_resistance)
+
+clean_data<-d |> 
+  mutate(County=case_when(
+    County==1~"Kiambu",
+    County==2~"Nakuru",
+    County==3~"Bungoma "
+  )) |> 
+  mutate(Designation=case_when(
+    Designation=="CO"~"Clinical officers",
+    Designation=="COI"~"Clinical officers",
+    Designation=="Consultant"~"Consultant ",
+    Designation=="MO"~"Medical officers",
+    Designation=="MOI"~"Medical officers",
+    Designation=="Pharmacist"~"Pharmacist"
+  ))|>
+  mutate(prescribed_antibiotics_every_10_patients=case_when(
+    prescribed_antibiotics_every_10_patients=="1-4 patients" ~"1-4 patients",  
+    prescribed_antibiotics_every_10_patients=="5 patients"~"5 patients",  
+    prescribed_antibiotics_every_10_patients==9~"6-9 patients",  
+    prescribed_antibiotics_every_10_patients=="6-9 patients"~"6-9 patients" , 
+    prescribed_antibiotics_every_10_patients=="All 10 patients"~"All 10 patients" ,
+    prescribed_antibiotics_every_10_patients=="None"~"None"
+  ))|> 
+  mutate(whom._prescribe=case_when(
+    whom._prescribe=="Hospitalized patients"~"Hospitalized patients",
+    whom._prescribe=="Patients at outpatient"~"Patients at outpatient",
+    whom._prescribe==9~"Patients in outpatient and hospitalized patients",
+    whom._prescribe=="Patients in outpatient and hospitalized patients"~"Patients in outpatient and hospitalized patients"
+    )) |> 
+  mutate(follow_antibiotic_prescription_guidelines=case_when(
+    follow_antibiotic_prescription_guidelines=="No"~"No",
+    follow_antibiotic_prescription_guidelines=="Yes"~"Yes" ,  
+    follow_antibiotic_prescription_guidelines=="#NULL!"~"Yes"   
+    )) |>
+  mutate(Patient_demands_overuse_antibiotics=case_when(
+    Patient_demands_overuse_antibiotics=="I agree"~"I agree",
+    Patient_demands_overuse_antibiotics=="I disagree"~"I disagree",
+    Patient_demands_overuse_antibiotics=="#NULL!"~"I agree",
+    Patient_demands_overuse_antibiotics=="I strongly agree"~"I strongly agree",
+    Patient_demands_overuse_antibiotics=="I strongly disagree"~"I strongly disagree",
+    Patient_demands_overuse_antibiotics=="Neutral"~"Neutral"
+  )) |> 
+  mutate(antibiotic_misuse_and_resistance=case_when(
+    antibiotic_misuse_and_resistance=="I agree"~"I agree",
+    antibiotic_misuse_and_resistance=="I disagree"~"I disagree",
+    antibiotic_misuse_and_resistance=="#NULL!"~"I strongly agree",
+    antibiotic_misuse_and_resistance=="I strongly agree"~"I strongly agree",
+    antibiotic_misuse_and_resistance=="I strongly disagree"~"I strongly disagree",
+    antibiotic_misuse_and_resistance=="Neutral"~"Neutral"
+  )) |> 
+  mutate(check_decisions_AP_colleague=case_when(
+    check_decisions_AP_colleague=="Always"~"Always",
+    check_decisions_AP_colleague=="Half of the times"~"Half of the times",
+    check_decisions_AP_colleague=="Mostly"~"Mostly",
+    check_decisions_AP_colleague=="Never"~"Never",
+    check_decisions_AP_colleague=="#NULL!"~"Sometimes",
+    check_decisions_AP_colleague=="Sometimes"~"Sometimes"
+    )) |> 
+  mutate(consult_seniorcolleague_aboutAP=case_when(
+    consult_seniorcolleague_aboutAP=="Always"~"Always",
+    consult_seniorcolleague_aboutAP=="Half of the times"~"Half of the times",
+    consult_seniorcolleague_aboutAP=="Mostly"~"Mostly",
+    consult_seniorcolleague_aboutAP=="Never"~"Never",
+    consult_seniorcolleague_aboutAP=="#NULL!"~"Sometimes",
+    consult_seniorcolleague_aboutAP=="Sometimes"~"Sometimes"
+    
+  )) |> 
+  mutate(dependant_labrotarydata_aboutAP=case_when(
+    dependant_labrotarydata_aboutAP=="Always"~"Always",
+    dependant_labrotarydata_aboutAP=="Half of the times"~"Half of the times",
+    dependant_labrotarydata_aboutAP=="Mostly"~"Mostly",
+    dependant_labrotarydata_aboutAP=="Never"~"Never",
+    dependant_labrotarydata_aboutAP=="#NULL!"~"Sometimes",
+    dependant_labrotarydata_aboutAP=="Sometimes"~"Sometimes"
+  )) |> 
+  mutate(Information_pharma_compa=case_when(
+    Information_pharma_compa=="#NULL!"~"Yes",
+    Information_pharma_compa=="No"~"No",
+    Information_pharma_compa=="Yes"~"Yes"
+  )) |> 
+  mutate(Courses_ofantibiotics=case_when(
+    Courses_ofantibiotics== "#NULL!"~ "1-3",
+    Courses_ofantibiotics== "0"~"0",
+    Courses_ofantibiotics== "6-10"~ "6-10",
+    Courses_ofantibiotics== "1-3"~ "1-3",
+    Courses_ofantibiotics== "4-6"~ "4-6",
+    Courses_ofantibiotics== ">10"~ ">10"
+    )) |> 
+  mutate(Knowledge_train_inst=case_when(
+    Knowledge_train_inst=="#NULL!"~"No",
+    Knowledge_train_inst=="No"~"No",
+    Knowledge_train_inst=="Yes"~"Yes"
+  )) |> 
+  mutate(from_Internet=case_when(
+    from_Internet=="#NULL!"~"No",
+    from_Internet=="No"~"No",
+    from_Internet=="Yes"~"Yes"
+  )) |> 
+  mutate(National_guideline=case_when(
+    National_guideline=="#NULL!"~"No",
+    National_guideline=="No"~"No",
+    National_guideline=="Yes"~"Yes"
+  )) |> 
+  mutate(WHO_guide_treat_bacterial_diseases=case_when(
+    WHO_guide_treat_bacterial_diseases=="Yes"~"Yes",
+    WHO_guide_treat_bacterial_diseases=="#NULL!"~"No",
+    WHO_guide_treat_bacterial_diseases=="No"~"No"
+  )) |> 
+  mutate(Info_pharma_compani=case_when(
+    Info_pharma_compani=="I do not know"~"I do not know",   
+    Info_pharma_compani=="Not at all useful"~"Not at all useful",
+    Info_pharma_compani=="#NULL!"~"Useful",
+    Info_pharma_compani=="Useful"~"Useful",
+    Info_pharma_compani=="Very useful"~"Very useful"
+  )) |> 
+  mutate(Knwoledge_traini_institu=case_when(
+    Knwoledge_traini_institu=="I do not know"~"I do not know",
+    Knwoledge_traini_institu=="Not at all useful"~"Not at all useful",
+    Knwoledge_traini_institu=="#NULL!"~"Useful",
+    Knwoledge_traini_institu=="Useful"~"Useful",
+    Knwoledge_traini_institu=="Very useful"~"Very useful"
+  )) |> 
+  mutate(use_Internet=case_when(
+    use_Internet=="I do not know"~"I do not know",
+    use_Internet=="Not at all useful"~"Not at all useful",
+    use_Internet=="#NULL!"~"Useful",
+    use_Internet=="Useful"~"Useful",
+    use_Internet=="Very useful"~"Very useful"
+  )) |> 
+  mutate(National_guide=case_when(
+    National_guide=="I do not know"~"I do not know",
+    National_guide=="Not at all useful"~"Not at all useful",
+    National_guide=="#NULL!"~"Useful",
+    National_guide=="Useful"~"Useful",
+    National_guide=="Very useful"~"Very useful"
+  )) |> 
+  mutate(WHO_guide_treat_bacterial_disea_useful=case_when(
+    WHO_guide_treat_bacterial_disea_useful=="I do not know"~"I do not know",
+    WHO_guide_treat_bacterial_disea_useful=="Not at all useful"~"Not at all useful",
+    WHO_guide_treat_bacterial_disea_useful== "#NULL!"~"Useful",
+    WHO_guide_treat_bacterial_disea_useful== "Useful"~"Useful",
+    WHO_guide_treat_bacterial_disea_useful=="Very useful"~"Very useful"
+  )) |> 
+  mutate(useful_antibiogram==case_when(
+      useful_antibiogram=="I do not know"~"I do not know",
+      useful_antibiogram=="Not at all useful"~"Not at all useful",
+      useful_antibiogram=="#NULL!"~"Useful",
+      useful_antibiogram=="Useful"~"Useful",
+      useful_antibiogram=="Very useful"~"Very useful"
+  ))|> 
+  mutate(facility_released_antibiogram=case_when(
+      facility_released_antibiogram=="#NULL!"~"No",
+      facility_released_antibiogram=="No"~"No",
+      facility_released_antibiogram=="Yes"~"Yes"
+  )) |> 
+  mutate(AP_resistance_pattern=case_when(
+      AP_resistance_pattern=="#NULL!"~"I strongly agree",
+      AP_resistance_pattern=="I agree"~"I agree",
+      AP_resistance_pattern=="I strongly agree"~"I strongly agree",
+      AP_resistance_pattern=="Neutral"~"Neutral"
+  )) |> 
+  mutate(APinfluenced_availabilitantibiotics_causeinfection=case_when(
+      APinfluenced_availabilitantibiotics_causeinfection=="I agree"~"I agree",
+      APinfluenced_availabilitantibiotics_causeinfection=="I disagree"~"I disagree",
+      APinfluenced_availabilitantibiotics_causeinfection=="#NULL!"~"I disagree",
+      APinfluenced_availabilitantibiotics_causeinfection=="Neutral"~"Neutral",
+      APinfluenced_availabilitantibiotics_causeinfection=="I strongly agree"~"I strongly agree",
+      APinfluenced_availabilitantibiotics_causeinfection=="I strongly disagree"~"I strongly disagree"
+  )) |> 
+  mutate(AP_influence_drugcost=case_when(
+    AP_influence_drugcost=="I agree"~"I agree",
+    AP_influence_drugcost=="I disagree"~"I disagree",
+    AP_influence_drugcost=="#NULL!"~"I agree",
+    AP_influence_drugcost=="Neutral"~"Neutral",
+    AP_influence_drugcost=="I strongly agree"~"I strongly agree",
+    AP_influence_drugcost=="I strongly disagree"~"I strongly disagree"
+  )) |> 
+  mutate(AP_concerned_quality_effect=case_when(
+    AP_concerned_quality_effect=="I agree"~"I agree",
+    AP_concerned_quality_effect=="I disagree"~"I disagree",
+    AP_concerned_quality_effect=="#NULL!"~"I agree",
+    AP_concerned_quality_effect=="Neutral"~"Neutral",
+    AP_concerned_quality_effect=="I strongly agree"~"I strongly agree",
+    AP_concerned_quality_effect=="I strongly disagree"~"I strongly disagree"
+  ))|> 
+  mutate(localguide_useful_international_guide=case_when(
+    localguide_useful_international_guide=="I agree"~"I agree",
+    localguide_useful_international_guide=="I disagree"~"I disagree",
+    localguide_useful_international_guide=="#NULL!"~"I agree",
+    localguide_useful_international_guide=="Neutral"~"Neutral",
+    localguide_useful_international_guide=="I strongly agree"~"I strongly agree",
+    localguide_useful_international_guide=="I strongly disagree"~"I strongly disagree"
+  ))|> 
+  mutate(Ag_AC_obstacle_help=case_when(
+    Ag_AC_obstacle_help=="I agree"~"I agree",
+    Ag_AC_obstacle_help=="I disagree"~"I disagree",
+    Ag_AC_obstacle_help=="#NULL!"~"I dsagree",
+    Ag_AC_obstacle_help=="Neutral"~"Neutral",
+    Ag_AC_obstacle_help=="I strongly agree"~"I strongly agree",
+    Ag_AC_obstacle_help=="I strongly disagree"~"I strongly disagree"
+  ))|> 
+  mutate(implementation_trainingprogram=case_when(
+    implementation_trainingprogram=="I agree"~"I agree",
+    implementation_trainingprogram=="I disagree"~"I disagree",
+    implementation_trainingprogram=="#NULL!"~"I strongly agree",
+    implementation_trainingprogram=="Neutral"~"Neutral",
+    implementation_trainingprogram=="I strongly agree"~"I strongly agree",
+    implementation_trainingprogram=="I strongly disagree"~"I strongly disagree"
+  )) |> 
+  mutate(treatment_4year_child_diarrhoea=case_when(
+    treatment_4year_child_diarrhoea=="Amoxicillin oraly"~"Amoxicillin oraly",
+    treatment_4year_child_diarrhoea=="Amoxicillin/clavulanic acid oraly"~"Amoxicillin/clavulanic acid oraly",
+    treatment_4year_child_diarrhoea=="Oral rehydration salts with no antibiotic"~"Oral rehydration salts with no antibiotic",
+    treatment_4year_child_diarrhoea=="#NULL!"~"Oral rehydration salts with no antibiotic",
+    treatment_4year_child_diarrhoea=="Trimethoprim/sulphamethoxazole orally"~"Trimethoprim/sulphamethoxazole orally"
+  ))|> 
+  mutate(treatmrnt_6yearchild_throadreddish=case_when(
+    treatmrnt_6yearchild_throadreddish=="Amoxicillin oraly"~"Amoxicillin oraly",
+    treatmrnt_6yearchild_throadreddish=="Amoxicillin/clavulanic acid oraly"~"Amoxicillin/clavulanic acid oraly",
+    treatmrnt_6yearchild_throadreddish=="No antibiotic"~"No antibiotic",
+    treatmrnt_6yearchild_throadreddish=="#NULL!"~"Amoxicillin oraly",
+    treatmrnt_6yearchild_throadreddish=="Trimethoprim/sulphamethoxazole orally"~"Trimethoprim/sulphamethoxazole orally"
+  )) |> 
+  mutate(treatment_sepsis=case_when(
+      treatment_sepsis=="Neither patient A nor patient B"~"Neither patient A nor patient B",
+      treatment_sepsis=="Patient A"~"Patient A" ,
+      treatment_sepsis=="#NULL!"~"Patient A",
+      treatment_sepsis=="Patient A & B"~"Patient A & B",
+      treatment_sepsis=="Patient B"~"Patient B"
+  )) |> 
+  mutate(AP_firsttrimester_pregnancy=case_when(
+    AP_firsttrimester_pregnancy=="#NULL!"~"Amoxicillin",
+    AP_firsttrimester_pregnancy==4~"Amoxicillin",
+    AP_firsttrimester_pregnancy=="Amoxicillin"~"Amoxicillin",
+    AP_firsttrimester_pregnancy=="Ciprofloxacin"~"Ciprofloxacin",
+    AP_firsttrimester_pregnancy=="Gentamicin"~"Gentamicin"
+  )) |> 
+  mutate(AP_anaerobes=case_when(
+    AP_anaerobes=="#NULL!"~"Metronidazole",
+    AP_anaerobes=="Metronidazole"~"Metronidazole",
+    AP_anaerobes=="Amoxicillin"~"Amoxicillin",
+    AP_anaerobes=="Trimethoprim/sulphamrthoxazole"~"Trimethoprim/sulphamrthoxazole"
+  )) |> 
+  mutate(AP_Methicillin_resistant=case_when(
+    AP_Methicillin_resistant=="#NULL!"~"None of these antibiotics",
+    AP_Methicillin_resistant=="Amoxicillin/clvulanic acid"~"Amoxicillin/clvulanic acid",
+    AP_Methicillin_resistant=="Cefotaxime"~"Cefotaxime",
+    AP_Methicillin_resistant=="Ceftriaxone"~"Ceftriaxone",
+    AP_Methicillin_resistant=="None of these antibiotics"~"None of these antibiotics"
+  )) |> 
+  mutate(AP_bloodbrain_barrier=case_when(
+    AP_bloodbrain_barrier=="#NULL!"~"Ceftriaxone",
+    AP_bloodbrain_barrier=="Ceftriaxone"~"Ceftriaxone",
+    AP_bloodbrain_barrier=="4"~"Ceftriaxone",
+    AP_bloodbrain_barrier=="Clindamycin"~"Clindamycin", 
+    AP_bloodbrain_barrier=="Vancomycin"~"Vancomycin"
+  )) |> 
+  mutate(Aminoglycoside_active_when=case_when(
+    Aminoglycoside_active_when=="#NULL!"~"Parenterally, once daily",
+    Aminoglycoside_active_when=="Orally, three times daily"~"Orally, three times daily",
+    Aminoglycoside_active_when=="Parenterally, once daily"~"Parenterally, once daily",
+    Aminoglycoside_active_when=="Parenterally, three times daily"~"Parenterally, three times daily"
+  )) |> mutate(Courses_ofantibiotics=case_when(
+  Courses_ofantibiotics== "0"~"0",
+  Courses_ofantibiotics== "6-10"~ "6-10",
+  Courses_ofantibiotics== "1-3"~ "1-3",
+  Courses_ofantibiotics== "4-6"~ "4-6",
+  Courses_ofantibiotics== ">10"~ ">10"
+)) 
+library(writexl)
+write.xlsx(clean_data, "C:/Users/U/Desktop/KAP/KAP_dataset_Clean.xlsx", rowNames = FALSE)
+rm(list=ls())
+D=read_xlsx("C:/Users/U/Desktop/KAP/KAP_dataset_Clean.xlsx")
+D |> 
+  count(Patient_demands_overuse_antibiotics)
+library(readxl)
+library(tidyverse)
+library(naniar)
+library(gtsummary)    
+library(gt)
+view(clean_data)
+glimpse(D)
+
+
+####Covert character as a factor
+d=D |> 
+  mutate_if(is.character,as.factor) |> 
+  glimpse()
+d |> 
+  count(Patient_demands_overuse_antibiotics)
+view(d)
+d$Facility=NULL
+d$Designation.1=NULL
+d|>
+ select(2:8) |>
+ tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+   ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table1.docx")
+#d|>
+#select(9:15) |>
+#tbl_summary(
+#statistic = all_continuous() ~ "{mean}±{sd}") |>
+#bold_labels() |>
+#as_gt() |>
+#gtsave("C:/Users/U/Desktop/KAP/Table2.docx")
+d|>
+ select(Work_experience,Designation) |>
+ tbl_summary(
+ statistic = all_continuous() ~ "{mean}±{sd}",
+  by = Designation
+  ) |>
+#add_p() |>
+#bold_p(t = 0.05) |>
+  bold_labels() |> 
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table2.docx")
+
+### Designation vs average number of patients prescribed in 10 person
+d|>
+  select(prescribed_antibiotics_every_10_patients,Designation) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}",
+    by = Designation
+  ) |>
+  #add_p() |>
+  #bold_p(t = 0.05) |>
+  bold_labels() |> 
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table3.docx")
+####Designation vs Questions on Antibiotic and thier results
+d|>
+  select(41:48,Designation) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}",
+    by = Designation
+  ) |>
+  add_overall() |>
+  add_p() |>
+  bold_p(t = 0.05) |>
+  bold_labels() |> 
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table4.docx")
+###Antbiotic resistance is a problem vs perception
+d|>
+  select(9:11) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+  ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table5.docx")
+
+###plotting reason for the AR problem
+library(likert)
+library(dplyr)
+library(xtable)
+library(sjPlot)
+library(ggplot2)
+library(ggstats)
+library(ggpubr)
+view(d)
+theme_set(theme_gray() +
+            theme(
+              axis.line = element_line(size=0.5),
+              panel.background = element_rect(fill=NA,size=rel(20)),
+              panel.grid.minor = element_line(colour = NA),
+              axis.text = element_text(size=16),
+              axis.title = element_text(size=18)
+            ))
+d_likert=d |> 
+  select(14:16)
+gglikert(d_likert)
+
+d |> 
+  count(awareness_antibiotic_resistance)
+##pie chart for awareness of antibiotic resistance
+# install.packages("dplyr")
+# install.packages("scales")
+library(dplyr)
+
+# Data transformation
+df <- d |> 
+  group_by(awareness_antibiotic_resistance) |>  
+  count() |> 
+  ungroup() |> 
+  mutate(perc = `n` / sum(`n`)) |>  
+  arrange(perc) |> 
+  mutate(labels = scales::percent(perc))
+df
+##Pie chart
+library(ggplot2)
+ggplot(df, aes(x = "", y = perc, fill = awareness_antibiotic_resistance)) +
+  geom_col() +
+  geom_label(aes(label = labels),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE) +
+  coord_polar(theta = "y")
+
+###Confidence level table
+d|>
+  select(18:19) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+  ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table6.docx")
+
+###Confidence vs score level comparison table
+d|>
+  select(18:19,Score.Level) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}",
+    by = Score.Level
+  ) |>
+  #add_p() |>
+  #bold_p(t = 0.05) |>
+  bold_labels() |> 
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table7.docx")
+####Comparison table between Designation vs score level
+d|>
+  select(Designation,Score.Level) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}",
+    by = Score.Level
+  ) |>
+  #add_p() |>
+  #bold_p(t = 0.05) |>
+  bold_labels() |> 
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table8.docx")
+
+###frequency of sources of information
+d|>
+  select(24:28) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+  ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table9.docx")
+#### frequency is sources of information useful
+d|>
+  select(29:33) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+  ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table10.docx")
+###Contributor antibiotic resistance frequency
+d|>
+  select(15:16) |>
+  tbl_summary(
+    statistic = all_continuous() ~ "{mean}±{sd}"
+  ) |>
+  bold_labels() |>
+  as_gt() |>
+  gtsave("C:/Users/U/Desktop/KAP/Table11.docx")
+#######Barplot
+###plot the variable
+library(ggpubr)
+library(sjPlot)
+
+# themes
+library(ggthemes)
+library(hrbrthemes)
+
+# colors
+library(RColorBrewer)
+library(viridis)
+library(viridisLite)
+library(paletteer)
+library(ggsci)
+
+# grid plots
+library(cowplot)
+
+# add color
+ggplot(data = d, aes(x =Designation , fill = "#527E87FF")) +
+  geom_bar()
+
+# fill by a category
+ggplot(data = d, aes(x = Designation, fill =Score.Level)) +
+  geom_bar()
+
+basic <- ggplot(data = d, aes(x =Designation, fill =Score.Level)) +
+  geom_bar(position = "dodge")+
+  labs(
+    x = "Knowledge score level",
+    y = "Counts",
+  )
+
+#basic + theme_bw()
+basic + theme_economics
+
